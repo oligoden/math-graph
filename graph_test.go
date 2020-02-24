@@ -1,6 +1,7 @@
 package graph_test
 
 import (
+	"fmt"
 	"testing"
 
 	graph "github.com/oligoden/math-graph"
@@ -34,12 +35,52 @@ func Test(t *testing.T) {
 		t.Error("expected 2 start nodes")
 	}
 
-	testFunc := make(map[string]bool)
-	f := func(name string) {
-		testFunc[name] = true
+	testRun := make(map[string]bool)
+	f := func(name string) error {
+		if name == "c" && !testRun["b"] {
+			return fmt.Errorf("c before b")
+		}
+		testRun[name] = true
+		return nil
 	}
-	g.Run(f)
-	if !testFunc["a"] {
+	err = g.CompileRun(f)
+	if err != nil {
+		t.Error(err)
+	}
+	if !testRun["a"] {
 		t.Error("expected test function a to be run")
+	}
+
+	testRun = make(map[string]bool)
+	var testFlag bool
+	f = func(name string) error {
+		fmt.Println(name, testFlag)
+		if name == "c" {
+			testFlag = true
+		}
+		testRun[name] = testFlag
+		return nil
+	}
+	err = g.SetRun(f, "a")
+	if err != nil {
+		t.Error(err)
+	}
+	testFlag = false
+	err = g.SetRun(f, "b")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if testRun["a"] {
+		t.Error("expected test function a not to be run")
+	}
+	if testRun["b"] {
+		t.Error("expected test function b not to be run")
+	}
+	if !testRun["c"] {
+		t.Error("expected test function c to be run")
+	}
+	if !testRun["d"] {
+		t.Error("expected test function d to be run")
 	}
 }
