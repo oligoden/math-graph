@@ -10,6 +10,12 @@ type Graph struct {
 	adj    map[string]map[string]uint
 }
 
+type Node struct {
+	level    uint
+	set      bool
+	children map[string]*Node
+}
+
 func New() *Graph {
 	g := &Graph{}
 	g.nodes = make(map[string]*Node)
@@ -55,6 +61,16 @@ func (g *Graph) Evaluate() error {
 	err := g.evaluate(g.adj, 1)
 	if err != nil {
 		return err
+	}
+	for row := range g.adj {
+		if g.nodes[row].set {
+			continue
+		}
+		for col := range g.adj[row] {
+			if g.adj[row][col] > 0 {
+				g.set(row, 0)
+			}
+		}
 	}
 	return nil
 }
@@ -163,10 +179,4 @@ func (g *Graph) SetRun(f runFunc, name string) error {
 	}
 
 	return nil
-}
-
-type Node struct {
-	level    uint
-	set      bool
-	children map[string]*Node
 }
