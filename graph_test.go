@@ -2,10 +2,39 @@ package graph_test
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
 
 	graph "github.com/oligoden/math-graph"
 )
+
+func TestBasic(t *testing.T) {
+	g := graph.New()
+	g.Add("a")
+	g.Add("b")
+	g.Link("a", "b")
+	err := g.Evaluate()
+	if err != nil {
+		t.Error(err)
+	}
+	if len(g.StartNodes()) != 1 {
+		t.Error("expected 1 start node, got", len(g.StartNodes()))
+	}
+}
+
+func TestCyclic(t *testing.T) {
+	g := graph.New()
+	g.Add("a")
+	g.Add("b")
+	g.Add("c")
+	g.Link("a", "b")
+	g.Link("b", "c")
+	g.Link("c", "a")
+	err := g.Evaluate()
+	if err == nil {
+		t.Error("expected cyclic error")
+	}
+}
 
 func Test(t *testing.T) {
 	g := graph.New()
@@ -82,5 +111,50 @@ func Test(t *testing.T) {
 	}
 	if !testRun["d"] {
 		t.Error("expected test function d to be run")
+	}
+}
+
+func Benchmark10N32E(b *testing.B) {
+	ns := "abcdefghij"
+	benchmarkEvaluate(ns, b)
+}
+
+func Benchmark20N162E(b *testing.B) {
+	ns := "abcdefghijklmnopqrst"
+	benchmarkEvaluate(ns, b)
+}
+
+func Benchmark30N392E(b *testing.B) {
+	ns := "abcdefghijklmnopqrstuvwxyzABCD"
+	benchmarkEvaluate(ns, b)
+}
+
+func Benchmark40N722E(b *testing.B) {
+	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN"
+	benchmarkEvaluate(ns, b)
+}
+
+func Benchmark50N1152E(b *testing.B) {
+	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX"
+	benchmarkEvaluate(ns, b)
+}
+
+func Benchmark60N1682E(b *testing.B) {
+	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567"
+	benchmarkEvaluate(ns, b)
+}
+
+func benchmarkEvaluate(ns string, b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		g := graph.New()
+		for i := 0; i < len(ns); i++ {
+			g.Add(string(ns[i]))
+		}
+		for i := 0; i < len(ns)-2; i++ {
+			for j := 0; j < len(ns)-i-2; j++ {
+				g.Link(string(ns[i]), string(ns[i+1+rand.Intn(len(ns)-i-1)]))
+			}
+		}
+		g.Evaluate()
 	}
 }
