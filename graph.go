@@ -57,7 +57,17 @@ func (g *Graph) Link(from, to string) error {
 	return nil
 }
 
+func (g *Graph) Unlink(from, to string) error {
+	g.adj[from][to] = 0
+	return nil
+}
+
 func (g *Graph) Evaluate() error {
+	for key := range g.nodes {
+		g.nodes[key].set = false
+		g.nodes[key].children = make(map[string]*Node)
+	}
+
 	err := g.evaluate(g.adj, 1)
 	if err != nil {
 		return err
@@ -70,6 +80,15 @@ func (g *Graph) Evaluate() error {
 			if g.adj[row][col] > 0 {
 				g.set(row, 0)
 			}
+		}
+		if !g.nodes[row].set {
+			g.nodes[row].set = true
+			g.nodes[row].level = 0
+
+			if g.levels[0] == nil {
+				g.levels[0] = make(map[string]*Node)
+			}
+			g.levels[0][row] = g.nodes[row]
 		}
 	}
 	return nil
@@ -141,15 +160,13 @@ func (g *Graph) set(node string, level uint) {
 	}
 }
 
-type runFunc func(string) error
-
 // CompileRun executes a runfunc on every node
 // in topological order, starting at the 0 level nodes
 // through to the highest level nodes. This guarantees
 // that all posible parent nodes are executed before child nodes.
 // However, walks are not followed. The nodes are simply scanned over.
 // CompileRun is usfull for a naive bulk execution in topological order.
-func (g *Graph) CompileRun(f runFunc) error {
+func (g *Graph) CompileRun(f func(string) error) error {
 	for _, nodes := range g.levels {
 		for name := range nodes {
 			err := f(name)
@@ -167,15 +184,14 @@ func (g *Graph) CompileRun(f runFunc) error {
 // before a child node. Yet, walks are strictly followed.
 // SetRun is usefull for setting properties on all child nodes
 // of a specific node.
-func (g *Graph) SetRun(f runFunc, name string) error {
-	fmt.Println("running", name)
+func (g *Graph) SetRun(f func(string) error, name string) error {
 	err := f(name)
 	if err != nil {
 		return err
 	}
 
-	for name := range g.nodes[name].children {
-		g.SetRun(f, name)
+	for n := range g.nodes[name].children {
+		g.SetRun(f, n)
 	}
 
 	return nil

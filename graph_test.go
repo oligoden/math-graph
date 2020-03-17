@@ -3,24 +3,11 @@ package graph_test
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 
 	graph "github.com/oligoden/math-graph"
 )
-
-func TestBasic(t *testing.T) {
-	g := graph.New()
-	g.Add("a")
-	g.Add("b")
-	g.Link("a", "b")
-	err := g.Evaluate()
-	if err != nil {
-		t.Error(err)
-	}
-	if len(g.StartNodes()) != 1 {
-		t.Error("expected 1 start node, got", len(g.StartNodes()))
-	}
-}
 
 func TestCyclic(t *testing.T) {
 	g := graph.New()
@@ -32,21 +19,34 @@ func TestCyclic(t *testing.T) {
 	g.Link("c", "a")
 	err := g.Evaluate()
 	if err == nil {
-		t.Error("expected cyclic error")
+		t.Fatal("expected cyclic error")
 	}
 }
 
-func Test(t *testing.T) {
+func TestRuns(t *testing.T) {
+	var got string
+
 	g := graph.New()
 	g.Add("a")
 	g.Add("b")
 	g.Add("c")
 	g.Add("d")
 	g.Add("e")
+	g.Add("f")
 
 	nodes := g.Nodes()
-	if len(nodes) != 5 {
-		t.Error("expected 4 nodes")
+	if len(nodes) != 6 {
+		t.Error("expected 6 nodes")
+	}
+
+	err := g.Evaluate()
+	if err != nil {
+		t.Error(err)
+	}
+
+	nodes = g.StartNodes()
+	if len(nodes) != 6 {
+		t.Error("expected 6 start nodes")
 	}
 
 	g.Link("a", "c")
@@ -54,14 +54,28 @@ func Test(t *testing.T) {
 	g.Link("b", "d")
 	g.Link("c", "d")
 	g.Link("d", "e")
-	err := g.Evaluate()
+	err = g.Evaluate()
 	if err != nil {
 		t.Error(err)
 	}
 
 	nodes = g.StartNodes()
-	if len(nodes) != 2 {
-		t.Error("expected 2 start nodes")
+	if len(nodes) != 3 {
+		t.Error("expected 3 start nodes")
+	}
+
+	g.CompileRun(func(s string) error { got += s; return nil })
+	if len(got) != 6 {
+		t.Errorf(`expected %d characters, got "%s"`, 6, got)
+	}
+	if !strings.Contains(got[0:3], "a") {
+		t.Errorf(`expected "a"`)
+	}
+	if !strings.Contains(got[0:3], "b") {
+		t.Errorf(`expected "b"`)
+	}
+	if !strings.Contains(got[0:3], "f") {
+		t.Errorf(`expected "f"`)
 	}
 
 	testRun := make(map[string]bool)
@@ -83,7 +97,6 @@ func Test(t *testing.T) {
 	testRun = make(map[string]bool)
 	var testFlag bool
 	f = func(name string) error {
-		fmt.Println(name, testFlag)
 		if name == "c" {
 			testFlag = true
 		}
@@ -111,6 +124,110 @@ func Test(t *testing.T) {
 	}
 	if !testRun["d"] {
 		t.Error("expected test function d to be run")
+	}
+}
+
+func TestReRunWithAdd(t *testing.T) {
+	var exp, got string
+
+	g := graph.New()
+	g.Add("a")
+	g.Add("b")
+	g.Add("c")
+	g.Link("a", "b")
+	g.Link("b", "c")
+	err := g.Evaluate()
+	if err != nil {
+		t.Error(err)
+	}
+
+	exp = "a"
+	got = ""
+	_, fnd := g.StartNodes()[exp]
+	if !fnd {
+		t.Fatalf(`expected "%s"`, exp)
+	}
+	g.SetRun(func(s string) error { got += s; return nil }, exp)
+	exp = "abc"
+	if exp != got {
+		t.Fatalf(`expected "%s", got "%s"`, exp, got)
+	}
+
+	g.Add("d")
+	g.Link("d", "c")
+	err = g.Evaluate()
+	if err != nil {
+		t.Error(err)
+	}
+
+	exp = "d"
+	got = ""
+	_, fnd = g.StartNodes()[exp]
+	if !fnd {
+		t.Fatalf(`expected "%s"`, exp)
+	}
+	g.SetRun(func(s string) error { got += s; return nil }, exp)
+	exp = "dc"
+	if exp != got {
+		t.Fatalf(`expected "%s", got "%s"`, exp, got)
+	}
+}
+
+func TestReRunWithUnlink(t *testing.T) {
+	var exp, got string
+
+	g := graph.New()
+	g.Add("a")
+	g.Add("b")
+	g.Add("c")
+	g.Link("a", "b")
+	g.Link("b", "c")
+	err := g.Evaluate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	exp = "a"
+	got = ""
+	_, fnd := g.StartNodes()[exp]
+	if !fnd {
+		t.Fatalf(`expected "%s"`, exp)
+	}
+	g.SetRun(func(s string) error { got += s; return nil }, exp)
+	exp = "abc"
+	if exp != got {
+		t.Fatalf(`expected "%s", got "%s"`, exp, got)
+	}
+
+	g.Unlink("a", "b")
+	g.Link("a", "c")
+	err = g.Evaluate()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	exp = "a"
+	got = ""
+	_, fnd = g.StartNodes()[exp]
+	if !fnd {
+		t.Fatalf(`expected "%s"`, exp)
+	}
+	g.SetRun(func(s string) error { got += s; return nil }, exp)
+	exp = "ac"
+	if exp != got {
+		t.Fatalf(`expected "%s", got "%s"`, exp, got)
+	}
+
+	exp = "b"
+	got = ""
+	_, fnd = g.StartNodes()[exp]
+	if !fnd {
+		t.Fatalf(`expected "%s"`, exp)
+	}
+	g.SetRun(func(s string) error { got += s; return nil }, exp)
+	exp = "bc"
+	if exp != got {
+		t.Fatalf(`expected "%s", got "%s"`, exp, got)
 	}
 }
 
