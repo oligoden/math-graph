@@ -6,9 +6,7 @@ import (
 	graph "github.com/oligoden/math-graph"
 )
 
-func ExampleUsage() {
-	var exp, got string
-
+func ExampleSetRun() {
 	g := graph.New()
 
 	g.Add("a")
@@ -27,20 +25,9 @@ func ExampleUsage() {
 		return
 	}
 
-	exp = "a"
-	_, fnd := g.StartNodes()[exp]
-	if !fnd {
-		fmt.Printf(`expected to find "%s"`, exp)
-		return
-	}
-
-	g.SetRun(func(s string) error { got += s; return nil }, exp)
-	exp = "abc"
-	if exp != got {
-		fmt.Printf(`expected "%s", got "%s"`, exp, got)
-		return
-	}
-	fmt.Println(exp)
+	var refs string
+	g.SetRun(func(s string) error { refs += s; return nil }, "a")
+	fmt.Println(refs)
 
 	//Output:
 	//abc
