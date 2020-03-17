@@ -6,7 +6,7 @@ import (
 	graph "github.com/oligoden/math-graph"
 )
 
-func ExampleSetRun() {
+func ExampleGraph_SetRun() {
 	g := graph.New()
 
 	g.Add("a")
