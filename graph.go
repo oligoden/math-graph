@@ -53,6 +53,12 @@ func (g *Graph) Add(name string) error {
 }
 
 func (g *Graph) Link(from, to string) error {
+	if _, ok := g.adj[from]; !ok {
+		return fmt.Errorf("%s does not exist", from)
+	}
+	if _, ok := g.adj[from][to]; !ok {
+		return fmt.Errorf("%s does not exist", to)
+	}
 	g.adj[from][to] = 1
 	return nil
 }

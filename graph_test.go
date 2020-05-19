@@ -23,6 +23,31 @@ func TestCyclic(t *testing.T) {
 	}
 }
 
+func TestLinkError(t *testing.T) {
+	g := graph.New()
+	g.Add("a")
+
+	err := g.Link("b", "a")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	exp := "b does not exist"
+	got := err.Error()
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+	}
+
+	err = g.Link("a", "b")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	exp = "b does not exist"
+	got = err.Error()
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+	}
+}
+
 func TestRuns(t *testing.T) {
 	var got string
 
