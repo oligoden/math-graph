@@ -125,6 +125,16 @@ func TestRuns(t *testing.T) {
 	if !testRun["d"] {
 		t.Error("expected test function d to be run")
 	}
+
+	testString := ""
+	f = func(name string) error {
+		testString += name
+		return nil
+	}
+	g.ReverseRun(f, "c")
+	if testString != "cab" && testString != "cba" {
+		t.Error(`expected "cab" or "cba", got`, testString)
+	}
 }
 
 func TestReRunWithAdd(t *testing.T) {

@@ -196,3 +196,19 @@ func (g *Graph) SetRun(f func(string) error, name string) error {
 
 	return nil
 }
+
+// ReverseRun executes only given nodes and its parents.
+func (g *Graph) ReverseRun(f func(string) error, name string) error {
+	err := f(name)
+	if err != nil {
+		return err
+	}
+
+	for node := range g.nodes {
+		if g.adj[node][name] > 0 {
+			g.ReverseRun(f, node)
+		}
+	}
+
+	return nil
+}
