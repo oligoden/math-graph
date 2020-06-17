@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -53,11 +54,27 @@ func (g *Graph) Add(name string) error {
 }
 
 func (g *Graph) Link(from, to string) error {
+	if _, fnd := g.adj[from]; !fnd {
+		return errors.New("the node " + from + " does not exist")
+	}
+
+	if _, fnd := g.adj[from][to]; !fnd {
+		return errors.New("the node " + to + " does not exist")
+	}
+
 	g.adj[from][to] = 1
 	return nil
 }
 
 func (g *Graph) Unlink(from, to string) error {
+	if _, fnd := g.adj[from]; !fnd {
+		return errors.New("the node " + from + " does not exist")
+	}
+
+	if _, fnd := g.adj[from][to]; !fnd {
+		return errors.New("the node " + to + " does not exist")
+	}
+
 	g.adj[from][to] = 0
 	return nil
 }
