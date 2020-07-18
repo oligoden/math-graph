@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -53,17 +54,27 @@ func (g *Graph) Add(name string) error {
 }
 
 func (g *Graph) Link(from, to string) error {
-	if _, ok := g.adj[from]; !ok {
-		return fmt.Errorf("%s does not exist", from)
+	if _, fnd := g.adj[from]; !fnd {
+		return errors.New("the node " + from + " does not exist")
 	}
-	if _, ok := g.adj[from][to]; !ok {
-		return fmt.Errorf("%s does not exist", to)
+
+	if _, fnd := g.adj[from][to]; !fnd {
+		return errors.New("the node " + to + " does not exist")
 	}
+
 	g.adj[from][to] = 1
 	return nil
 }
 
 func (g *Graph) Unlink(from, to string) error {
+	if _, fnd := g.adj[from]; !fnd {
+		return errors.New("the node " + from + " does not exist")
+	}
+
+	if _, fnd := g.adj[from][to]; !fnd {
+		return errors.New("the node " + to + " does not exist")
+	}
+
 	g.adj[from][to] = 0
 	return nil
 }
@@ -198,6 +209,22 @@ func (g *Graph) SetRun(f func(string) error, name string) error {
 
 	for n := range g.nodes[name].children {
 		g.SetRun(f, n)
+	}
+
+	return nil
+}
+
+// ReverseRun executes only given nodes and its parents.
+func (g *Graph) ReverseRun(f func(string) error, name string) error {
+	err := f(name)
+	if err != nil {
+		return err
+	}
+
+	for node := range g.nodes {
+		if g.adj[node][name] > 0 {
+			g.ReverseRun(f, node)
+		}
 	}
 
 	return nil
