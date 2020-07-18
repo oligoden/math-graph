@@ -217,7 +217,12 @@ func (g *Graph) SetRun(f func(string) error, name string) error {
 		return err
 	}
 
-	for n := range g.nodes[name].children {
+	node, ok := g.nodes[name]
+	if !ok {
+		return errors.New("node " + name + " does not exist")
+	}
+
+	for n := range node.children {
 		g.SetRun(f, n)
 	}
 
@@ -231,7 +236,12 @@ func (g *Graph) ReverseRun(f func(string) error, name string) error {
 		return err
 	}
 
-	col := g.nodes[name].adjIndex
+	n, ok := g.nodes[name]
+	if !ok {
+		return errors.New("node " + name + " does not exist")
+	}
+	col := n.adjIndex
+
 	for row := range g.adj {
 		if g.adj[row][col] > 0 {
 			g.ReverseRun(f, g.indexes[row])
