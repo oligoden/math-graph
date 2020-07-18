@@ -6,21 +6,24 @@ import (
 )
 
 type Graph struct {
-	nodes  map[string]*Node
-	levels []map[string]*Node
-	adj    map[string]map[string]uint
+	nodes   map[string]*Node
+	indexes map[int]string
+	levels  []map[string]*Node
+	adj     [][]uint
 }
 
 type Node struct {
 	level    uint
 	set      bool
 	children map[string]*Node
+	adjIndex int
 }
 
 func New() *Graph {
 	g := &Graph{}
 	g.nodes = make(map[string]*Node)
-	g.adj = make(map[string]map[string]uint)
+	g.indexes = make(map[int]string)
+	g.adj = [][]uint{}
 	return g
 }
 
@@ -45,37 +48,39 @@ func (g *Graph) StartNodes() map[string]*Node {
 func (g *Graph) Add(name string) error {
 	g.nodes[name] = &Node{}
 	g.nodes[name].children = make(map[string]*Node)
-	g.adj[name] = make(map[string]uint)
-	for k := range g.adj {
-		g.adj[k][name] = 0
-		g.adj[name][k] = 0
+	g.nodes[name].adjIndex = len(g.adj)
+	g.indexes[g.nodes[name].adjIndex] = name
+	for i := range g.adj {
+		g.adj[i] = append(g.adj[i], 0)
 	}
+	g.adj = append(g.adj, make([]uint, len(g.adj)+1))
+
 	return nil
 }
 
 func (g *Graph) Link(from, to string) error {
-	if _, fnd := g.adj[from]; !fnd {
+	if _, fnd := g.nodes[from]; !fnd {
 		return errors.New("the node " + from + " does not exist")
 	}
 
-	if _, fnd := g.adj[from][to]; !fnd {
+	if _, fnd := g.nodes[to]; !fnd {
 		return errors.New("the node " + to + " does not exist")
 	}
 
-	g.adj[from][to] = 1
+	g.adj[g.nodes[from].adjIndex][g.nodes[to].adjIndex] = 1
 	return nil
 }
 
 func (g *Graph) Unlink(from, to string) error {
-	if _, fnd := g.adj[from]; !fnd {
+	if _, fnd := g.nodes[from]; !fnd {
 		return errors.New("the node " + from + " does not exist")
 	}
 
-	if _, fnd := g.adj[from][to]; !fnd {
+	if _, fnd := g.nodes[to]; !fnd {
 		return errors.New("the node " + to + " does not exist")
 	}
 
-	g.adj[from][to] = 0
+	g.adj[g.nodes[from].adjIndex][g.nodes[to].adjIndex] = 0
 	return nil
 }
 
@@ -89,38 +94,40 @@ func (g *Graph) Evaluate() error {
 	if err != nil {
 		return err
 	}
-	for row := range g.adj {
-		if g.nodes[row].set {
+	for key, node := range g.nodes {
+		if node.set {
 			continue
 		}
+		row := node.adjIndex
 		for col := range g.adj[row] {
 			if g.adj[row][col] > 0 {
-				g.set(row, 0)
+				g.set(key, 0)
 			}
 		}
-		if !g.nodes[row].set {
-			g.nodes[row].set = true
-			g.nodes[row].level = 0
+		if !g.nodes[key].set {
+			g.nodes[key].set = true
+			g.nodes[key].level = 0
 
 			if g.levels[0] == nil {
 				g.levels[0] = make(map[string]*Node)
 			}
-			g.levels[0][row] = g.nodes[row]
+			g.levels[0][key] = g.nodes[key]
 		}
 	}
 	return nil
 }
 
-func (g *Graph) evaluate(pre map[string]map[string]uint, depth uint) error {
+func (g *Graph) evaluate(pre [][]uint, depth uint) error {
 	depth++
 	if depth == 100 {
 		return fmt.Errorf("max walk depht reached")
 	}
+	length := len(pre)
 	done := true
-	prd := make(map[string]map[string]uint)
+	prd := make([][]uint, length)
 
 	for row := range pre {
-		prd[row] = make(map[string]uint)
+		prd[row] = make([]uint, length)
 		for col := range pre[row] {
 			for elm := range pre {
 				prd[row][col] += pre[row][elm] * g.adj[elm][col]
@@ -143,13 +150,14 @@ func (g *Graph) evaluate(pre map[string]map[string]uint, depth uint) error {
 	if err != nil {
 		return err
 	}
-	for row := range prd {
-		if g.nodes[row].set {
+	for n := range g.nodes {
+		if g.nodes[n].set {
 			continue
 		}
+		row := g.nodes[n].adjIndex
 		for col := range prd[row] {
 			if prd[row][col] > 0 {
-				g.set(row, 0)
+				g.set(n, 0)
 			}
 		}
 	}
@@ -169,8 +177,10 @@ func (g *Graph) set(node string, level uint) {
 	}
 	g.levels[level][node] = g.nodes[node]
 
-	for child := range g.adj[node] {
-		if g.adj[node][child] > 0 {
+	row := g.nodes[node].adjIndex
+	for col := range g.adj[row] {
+		if g.adj[row][col] > 0 {
+			child := g.indexes[col]
 			g.nodes[node].children[child] = g.nodes[child]
 			g.set(child, level+1)
 		}
@@ -221,9 +231,10 @@ func (g *Graph) ReverseRun(f func(string) error, name string) error {
 		return err
 	}
 
-	for node := range g.nodes {
-		if g.adj[node][name] > 0 {
-			g.ReverseRun(f, node)
+	col := g.nodes[name].adjIndex
+	for row := range g.adj {
+		if g.adj[row][col] > 0 {
+			g.ReverseRun(f, g.indexes[row])
 		}
 	}
 

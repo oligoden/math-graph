@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	graph "github.com/oligoden/math-graph"
+
+	"github.com/pkg/profile"
 )
 
 func TestCyclic(t *testing.T) {
@@ -31,7 +33,7 @@ func TestLinkError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	exp := "b does not exist"
+	exp := "the node b does not exist"
 	got := err.Error()
 	if exp != got {
 		t.Errorf(`expected "%s", got "%s"`, exp, got)
@@ -41,7 +43,7 @@ func TestLinkError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	exp = "b does not exist"
+	exp = "the node b does not exist"
 	got = err.Error()
 	if exp != got {
 		t.Errorf(`expected "%s", got "%s"`, exp, got)
@@ -264,6 +266,22 @@ func TestReRunWithUnlink(t *testing.T) {
 	if exp != got {
 		t.Fatalf(`expected "%s", got "%s"`, exp, got)
 	}
+}
+
+func TestProfile(t *testing.T) {
+	t.Skip()
+	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN"
+	g := graph.New()
+	for i := 0; i < len(ns); i++ {
+		g.Add(string(ns[i]))
+	}
+	for i := 0; i < len(ns)-2; i++ {
+		for j := 0; j < len(ns)-i-2; j++ {
+			g.Link(string(ns[i]), string(ns[i+1+rand.Intn(len(ns)-i-1)]))
+		}
+	}
+	defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
+	g.Evaluate()
 }
 
 func Benchmark10N32E(b *testing.B) {
