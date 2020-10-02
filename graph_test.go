@@ -174,6 +174,153 @@ func TestRuns(t *testing.T) {
 	}
 }
 
+func TestSmallRun(t *testing.T) {
+	g := graph.New()
+
+	g.Add("a")
+	g.Add("d")
+	g.Add("b")
+	g.Add("c")
+
+	g.Link("a", "b")
+	g.Link("a", "d")
+	g.Link("b", "c")
+	g.Link("c", "d")
+
+	err := g.Evaluate()
+	if err != nil {
+		t.Error(err)
+	}
+
+	testRun := []string{}
+	f := func(name string) error {
+		testRun = append(testRun, name)
+		return nil
+	}
+	err = g.CompileRun(f)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(testRun) != 4 {
+		t.Errorf(`%+v`, g)
+		t.Fatal("expected 4 nodes, got", len(testRun))
+	}
+
+	exp := "d"
+	got := testRun[3]
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+	}
+
+	exp = "a"
+	got = testRun[0]
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+		t.Errorf(`%+v`, g)
+		t.Errorf(`%+v`, g.Nodes()["a"])
+		t.Errorf(`%+v`, g.Nodes()["b"])
+		t.Errorf(`%+v`, g.Nodes()["c"])
+		t.Errorf(`%+v`, g.Nodes()["d"])
+	}
+}
+
+func TestLargeRun(t *testing.T) {
+	g := graph.New()
+
+	g.Add("a")
+	g.Add("b")
+	g.Add("c")
+	g.Add("d")
+	g.Add("e")
+	g.Add("f")
+	g.Add("g")
+	g.Add("h")
+	g.Add("i")
+	g.Add("j")
+	g.Add("k")
+	g.Add("l")
+	g.Add("m")
+	g.Add("n")
+	g.Add("o")
+	g.Add("p")
+	g.Add("r")
+	g.Add("s")
+	g.Add("t")
+	g.Add("u")
+	g.Add("v")
+	g.Add("x")
+	g.Add("y")
+	g.Add("z")
+	g.Add("4")
+	g.Add("5")
+	g.Add("6")
+
+	g.Link("a", "b")
+	g.Link("a", "c")
+	g.Link("c", "d")
+	g.Link("a", "e")
+	g.Link("e", "f")
+	g.Link("e", "g")
+	g.Link("g", "b")
+	g.Link("f", "b")
+	g.Link("e", "h")
+	g.Link("h", "i")
+	g.Link("i", "b")
+	g.Link("h", "j")
+	g.Link("j", "k")
+	g.Link("k", "b")
+	g.Link("h", "l")
+	g.Link("l", "m")
+	g.Link("m", "b")
+	g.Link("l", "n")
+	g.Link("n", "o")
+	g.Link("o", "b")
+	g.Link("q", "p")
+	g.Link("p", "r")
+	g.Link("p", "s")
+	g.Link("p", "t")
+	g.Link("p", "u")
+	g.Link("p", "v")
+	g.Link("v", "b")
+	g.Link("r", "b")
+	g.Link("s", "b")
+	g.Link("t", "b")
+	g.Link("u", "b")
+	g.Link("q", "x")
+	g.Link("x", "y")
+	g.Link("x", "z")
+	g.Link("x", "4")
+	g.Link("x", "5")
+	g.Link("x", "6")
+	g.Link("6", "b")
+	g.Link("y", "b")
+	g.Link("z", "b")
+	g.Link("4", "b")
+	g.Link("5", "b")
+
+	err := g.Evaluate()
+	if err != nil {
+		t.Error(err)
+	}
+
+	testRun := []string{}
+	f := func(name string) error {
+		testRun = append(testRun, name)
+		return nil
+	}
+	err = g.CompileRun(f)
+	if err != nil {
+		t.Error(err)
+	}
+
+	exp := "b"
+	got := testRun[len(testRun)-1]
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+	}
+}
+
 func TestReRunWithAdd(t *testing.T) {
 	var exp, got string
 
@@ -294,35 +441,35 @@ func TestProfile(t *testing.T) {
 	g.Evaluate()
 }
 
-func Benchmark10N32E(b *testing.B) {
+func Benchmark10N8E(b *testing.B) {
 	ns := "abcdefghij"
 	benchmarkEvaluate(ns, b)
 }
 
-func Benchmark20N162E(b *testing.B) {
+func Benchmark20N98E(b *testing.B) {
 	ns := "abcdefghijklmnopqrst"
 	benchmarkEvaluate(ns, b)
 }
 
-func Benchmark30N392E(b *testing.B) {
+func Benchmark30N288E(b *testing.B) {
 	ns := "abcdefghijklmnopqrstuvwxyzABCD"
 	benchmarkEvaluate(ns, b)
 }
 
-func Benchmark40N722E(b *testing.B) {
+func Benchmark40N578E(b *testing.B) {
 	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN"
 	benchmarkEvaluate(ns, b)
 }
 
-func Benchmark50N1152E(b *testing.B) {
-	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX"
-	benchmarkEvaluate(ns, b)
-}
+// func Benchmark50N1152E(b *testing.B) {
+// 	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX"
+// 	benchmarkEvaluate(ns, b)
+// }
 
-func Benchmark60N1682E(b *testing.B) {
-	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567"
-	benchmarkEvaluate(ns, b)
-}
+// func Benchmark60N1682E(b *testing.B) {
+// 	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567"
+// 	benchmarkEvaluate(ns, b)
+// }
 
 func benchmarkEvaluate(ns string, b *testing.B) {
 	for n := 0; n < b.N; n++ {
@@ -330,11 +477,13 @@ func benchmarkEvaluate(ns string, b *testing.B) {
 		for i := 0; i < len(ns); i++ {
 			g.Add(string(ns[i]))
 		}
-		for i := 0; i < len(ns)-2; i++ {
-			for j := 0; j < len(ns)-i-2; j++ {
+		for i := 0; i < len(ns)-6; i++ {
+			for j := 0; j < len(ns)-i-6; j++ {
 				g.Link(string(ns[i]), string(ns[i+1+rand.Intn(len(ns)-i-1)]))
 			}
 		}
+
 		g.Evaluate()
+
 	}
 }

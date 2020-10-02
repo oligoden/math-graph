@@ -94,16 +94,18 @@ func (g *Graph) Evaluate() error {
 	if err != nil {
 		return err
 	}
-	for key, node := range g.nodes {
-		if node.set {
-			continue
-		}
+
+	for _, node := range g.nodes {
 		row := node.adjIndex
 		for col := range g.adj[row] {
 			if g.adj[row][col] > 0 {
-				g.set(key, 0)
+				g.setNode(g.indexes[col], 1)
 			}
 		}
+	}
+
+	// Setting starting nodes and children
+	for key := range g.nodes {
 		if !g.nodes[key].set {
 			g.nodes[key].set = true
 			g.nodes[key].level = 0
@@ -112,20 +114,36 @@ func (g *Graph) Evaluate() error {
 				g.levels[0] = make(map[string]*Node)
 			}
 			g.levels[0][key] = g.nodes[key]
+
+			g.setChildren(key)
 		}
 	}
 	return nil
 }
 
+func (g *Graph) setChildren(node string) {
+	row := g.nodes[node].adjIndex
+	for col := range g.adj[row] {
+		if g.adj[row][col] > 0 {
+			child := g.indexes[col]
+			g.nodes[node].children[child] = g.nodes[child]
+			g.setChildren(child)
+		}
+	}
+}
+
 func (g *Graph) evaluate(pre [][]uint, depth uint) error {
 	depth++
+
 	if depth == 100 {
 		return fmt.Errorf("max walk depht reached")
 	}
+
+	// do matrix multiplication prd = pre * adj
+	// done will stay true if there are no walks of length depth
 	length := len(pre)
 	done := true
 	prd := make([][]uint, length)
-
 	for row := range pre {
 		prd[row] = make([]uint, length)
 		for col := range pre[row] {
@@ -150,21 +168,19 @@ func (g *Graph) evaluate(pre [][]uint, depth uint) error {
 	if err != nil {
 		return err
 	}
+
 	for n := range g.nodes {
-		if g.nodes[n].set {
-			continue
-		}
 		row := g.nodes[n].adjIndex
 		for col := range prd[row] {
 			if prd[row][col] > 0 {
-				g.set(n, 0)
+				g.setNode(g.indexes[col], depth)
 			}
 		}
 	}
 	return nil
 }
 
-func (g *Graph) set(node string, level uint) {
+func (g *Graph) setNode(node string, level uint) {
 	if g.nodes[node].set {
 		return
 	}
@@ -176,15 +192,6 @@ func (g *Graph) set(node string, level uint) {
 		g.levels[level] = make(map[string]*Node)
 	}
 	g.levels[level][node] = g.nodes[node]
-
-	row := g.nodes[node].adjIndex
-	for col := range g.adj[row] {
-		if g.adj[row][col] > 0 {
-			child := g.indexes[col]
-			g.nodes[node].children[child] = g.nodes[child]
-			g.set(child, level+1)
-		}
-	}
 }
 
 // CompileRun executes a runfunc on every node
