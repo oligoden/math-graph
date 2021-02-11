@@ -13,10 +13,11 @@ type Graph struct {
 }
 
 type Node struct {
-	level    uint
-	set      bool
-	children map[string]*Node
-	adjIndex int
+	level       uint
+	set         bool
+	childrenSet bool
+	children    map[string]*Node
+	adjIndex    int
 }
 
 func New() *Graph {
@@ -87,6 +88,7 @@ func (g *Graph) Unlink(from, to string) error {
 func (g *Graph) Evaluate() error {
 	for key := range g.nodes {
 		g.nodes[key].set = false
+		g.nodes[key].childrenSet = false
 		g.nodes[key].children = make(map[string]*Node)
 	}
 
@@ -104,7 +106,7 @@ func (g *Graph) Evaluate() error {
 		}
 	}
 
-	// Setting starting nodes and children
+	// Setting starting nodes (nodes that is not set yet) and children
 	for key := range g.nodes {
 		if !g.nodes[key].set {
 			g.nodes[key].set = true
@@ -115,7 +117,9 @@ func (g *Graph) Evaluate() error {
 			}
 			g.levels[0][key] = g.nodes[key]
 
-			g.setChildren(key)
+			if !g.nodes[key].childrenSet {
+				g.setChildren(key)
+			}
 		}
 	}
 	return nil
@@ -127,7 +131,10 @@ func (g *Graph) setChildren(node string) {
 		if g.adj[row][col] > 0 {
 			child := g.indexes[col]
 			g.nodes[node].children[child] = g.nodes[child]
-			g.setChildren(child)
+			if !g.nodes[child].childrenSet {
+				g.setChildren(child)
+				g.nodes[child].childrenSet = true
+			}
 		}
 	}
 }

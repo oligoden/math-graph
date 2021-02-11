@@ -461,15 +461,15 @@ func Benchmark40N578E(b *testing.B) {
 	benchmarkEvaluate(ns, b)
 }
 
-// func Benchmark50N1152E(b *testing.B) {
-// 	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX"
-// 	benchmarkEvaluate(ns, b)
-// }
+func Benchmark50N1152E(b *testing.B) {
+	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX"
+	benchmarkEvaluate(ns, b)
+}
 
-// func Benchmark60N1682E(b *testing.B) {
-// 	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567"
-// 	benchmarkEvaluate(ns, b)
-// }
+func Benchmark60N1682E(b *testing.B) {
+	ns := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567"
+	benchmarkEvaluate(ns, b)
+}
 
 func benchmarkEvaluate(ns string, b *testing.B) {
 	for n := 0; n < b.N; n++ {
