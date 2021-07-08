@@ -174,7 +174,96 @@ func TestRuns(t *testing.T) {
 	}
 }
 
-func TestSmallRun(t *testing.T) {
+func TestSmallRun1(t *testing.T) {
+	g := graph.New()
+
+	g.Add("a")
+	g.Add("b")
+	g.Add("c")
+
+	g.Link("a", "b")
+	g.Link("a", "c")
+	g.Link("b", "c")
+
+	err := g.Evaluate()
+	if err != nil {
+		t.Error(err)
+	}
+
+	testRun := []string{}
+	f := func(name string) error {
+		testRun = append(testRun, name)
+		return nil
+	}
+	err = g.CompileRun(f)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(testRun) != 3 {
+		t.Errorf(`%+v`, g)
+		t.Fatal("expected 3 nodes, got", len(testRun))
+	}
+
+	exp := "c"
+	got := testRun[2]
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+	}
+
+	exp = "a"
+	got = testRun[0]
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+		t.Errorf(`%+v`, g)
+		t.Errorf(`%+v`, g.Nodes()["a"])
+		t.Errorf(`%+v`, g.Nodes()["b"])
+		t.Errorf(`%+v`, g.Nodes()["c"])
+	}
+
+	testRun = []string{}
+	// f := func(name string) error {
+	// 	testRun = append(testRun, name)
+	// 	return nil
+	// }
+	err = g.ReverseRun(f, "c")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(testRun) != 4 {
+		t.Errorf(`%+v`, g)
+		t.Fatal("expected 4 nodes, got", len(testRun))
+	}
+
+	exp = "a"
+	got = testRun[3]
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+	}
+
+	exp = "c"
+	got = testRun[0]
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+		t.Errorf(`%+v`, g)
+		t.Errorf(`%+v`, g.Nodes()["a"])
+		t.Errorf(`%+v`, g.Nodes()["b"])
+		t.Errorf(`%+v`, g.Nodes()["c"])
+	}
+
+	exp = `digraph {
+	a -> b;
+	a -> c;
+	b -> c;
+}`
+	got = g.Output().String()
+	if exp != got {
+		t.Errorf(`expected "%s", got "%s"`, exp, got)
+	}
+}
+
+func TestSmallRun2(t *testing.T) {
 	g := graph.New()
 
 	g.Add("a")

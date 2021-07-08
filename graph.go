@@ -1,6 +1,7 @@
 package graph
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 )
@@ -263,4 +264,20 @@ func (g *Graph) ReverseRun(f func(string) error, name string) error {
 	}
 
 	return nil
+}
+
+func (g *Graph) Output() *bytes.Buffer {
+	buf := bytes.NewBufferString("digraph {\n")
+
+	for _, node := range g.nodes {
+		row := node.adjIndex
+		for col := range g.adj[row] {
+			if g.adj[row][col] == 1 {
+				fmt.Fprintf(buf, "\t%s -> %s;\n", g.indexes[row], g.indexes[col])
+			}
+		}
+	}
+
+	buf.WriteString("}")
+	return buf
 }
