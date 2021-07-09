@@ -273,7 +273,7 @@ func (g *Graph) Output() *bytes.Buffer {
 		row := node.adjIndex
 		for col := range g.adj[row] {
 			if g.adj[row][col] == 1 {
-				fmt.Fprintf(buf, "\t%s -> %s;\n", g.indexes[row], g.indexes[col])
+				fmt.Fprintf(buf, "\t\"%s\" -> \"%s\";\n", g.indexes[row], g.indexes[col])
 			}
 		}
 	}

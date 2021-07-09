@@ -222,10 +222,6 @@ func TestSmallRun1(t *testing.T) {
 	}
 
 	testRun = []string{}
-	// f := func(name string) error {
-	// 	testRun = append(testRun, name)
-	// 	return nil
-	// }
 	err = g.ReverseRun(f, "c")
 	if err != nil {
 		t.Error(err)
@@ -253,9 +249,9 @@ func TestSmallRun1(t *testing.T) {
 	}
 
 	exp = `digraph {
-	a -> b;
-	a -> c;
-	b -> c;
+	"a" -> "b";
+	"a" -> "c";
+	"b" -> "c";
 }`
 	got = g.Output().String()
 	if exp != got {
