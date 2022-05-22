@@ -249,11 +249,14 @@ func TestSmallRun1(t *testing.T) {
 	}
 
 	exp = `digraph {
+	"a" [color = red];
+	"b" [color = red];
+	"c";
 	"a" -> "b";
 	"a" -> "c";
 	"b" -> "c";
 }`
-	got = g.Output().String()
+	got = g.Output("[a,b]", "[color = red]", "c").String()
 	if exp != got {
 		t.Errorf(`expected "%s", got "%s"`, exp, got)
 	}

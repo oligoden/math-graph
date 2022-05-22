@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"regexp"
 )
 
 type Graph struct {
@@ -266,8 +267,24 @@ func (g *Graph) ReverseRun(f func(string) error, name string) error {
 	return nil
 }
 
-func (g *Graph) Output() *bytes.Buffer {
+func (g *Graph) Output(as ...string) *bytes.Buffer {
 	buf := bytes.NewBufferString("digraph {\n")
+
+	if len(as)%2 == 1 {
+		as = as[0 : len(as)-1]
+	}
+
+	for name := range g.nodes {
+		fmt.Fprintf(buf, "\t\"%s\"", name)
+		for i := 0; i < len(as)/2; i++ {
+			match, _ := regexp.MatchString(as[2*i], name)
+			if match {
+				fmt.Fprintf(buf, " %s", as[2*i+1])
+				break
+			}
+		}
+		fmt.Fprintln(buf, ";")
+	}
 
 	for _, node := range g.nodes {
 		row := node.adjIndex
