@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	graph "github.com/oligoden/math-graph"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/pkg/profile"
 )
@@ -453,6 +454,26 @@ func TestReRunWithAdd(t *testing.T) {
 	if exp != got {
 		t.Fatalf(`expected "%s", got "%s"`, exp, got)
 	}
+}
+
+func TestRemoveNode(t *testing.T) {
+	assert := assert.New(t)
+
+	g := graph.New()
+	g.Add("a")
+	g.Add("b")
+	g.Add("c")
+	g.Link("a", "b")
+	g.Link("b", "c")
+	err := g.Evaluate()
+	assert.NoError(err)
+
+	g.Remove("b")
+	err = g.Evaluate()
+	assert.NoError(err)
+
+	assert.Len(g.Nodes(), 2)
+	assert.Len(g.StartNodes(), 2)
 }
 
 func TestReRunWithUnlink(t *testing.T) {

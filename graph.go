@@ -61,6 +61,41 @@ func (g *Graph) Add(name string) error {
 	return nil
 }
 
+func (g *Graph) Remove(name string) error {
+	if _, fnd := g.nodes[name]; !fnd {
+		return errors.New("the node " + name + " does not exist")
+	}
+
+	i := g.nodes[name].adjIndex
+	l := g.nodes[name].level
+
+	delete(g.nodes, name)
+	delete(g.levels[l], name)
+	for j := i; j < len(g.adj)-1; j++ {
+		g.indexes[j] = g.indexes[j+1]
+		g.nodes[g.indexes[j+1]].adjIndex = j
+	}
+	delete(g.indexes, len(g.adj))
+
+	// delete row from adj matrix
+	if i < len(g.adj)-1 {
+		copy(g.adj[i:], g.adj[i+1:])
+	}
+	g.adj[len(g.adj)-1] = nil
+	g.adj = g.adj[:len(g.adj)-1]
+
+	// delete col from adj matrix
+	for j := range g.adj {
+		if i < len(g.adj[j])-1 {
+			copy(g.adj[j][i:], g.adj[j][i+1:])
+		}
+		g.adj[j][len(g.adj[j])-1] = 0
+		g.adj[j] = g.adj[j][:len(g.adj[j])-1]
+	}
+
+	return nil
+}
+
 func (g *Graph) Link(from, to string) error {
 	if _, fnd := g.nodes[from]; !fnd {
 		return errors.New("the node " + from + " does not exist")
@@ -145,7 +180,7 @@ func (g *Graph) evaluate(pre [][]uint, depth uint) error {
 	depth++
 
 	if depth == 100 {
-		return fmt.Errorf("max walk depht reached")
+		return fmt.Errorf("max walk depth reached")
 	}
 
 	// do matrix multiplication prd = pre * adj
