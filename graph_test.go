@@ -456,6 +456,30 @@ func TestReRunWithAdd(t *testing.T) {
 	}
 }
 
+func TestRename(t *testing.T) {
+	assert := assert.New(t)
+
+	g := graph.New()
+	g.Add("a")
+	g.Add("b")
+	g.Add("c")
+	g.Link("a", "b")
+	g.Link("b", "c")
+	err := g.Evaluate()
+	assert.NoError(err)
+
+	g.Rename("b", "k")
+	walk := ""
+	f := func(name string) error {
+		walk = walk + name
+		return nil
+	}
+	g.CompileRun(f)
+	assert.Equal("akc", walk)
+	fmt.Printf("%+v\n", g)
+	assert.Len(g.Nodes(), 3)
+}
+
 func TestRemoveNode(t *testing.T) {
 	assert := assert.New(t)
 

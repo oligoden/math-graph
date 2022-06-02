@@ -10,7 +10,7 @@ import (
 type Graph struct {
 	nodes   map[string]*Node
 	indexes map[int]string
-	levels  []map[string]*Node
+	levels  []map[int]*Node
 	adj     [][]uint
 }
 
@@ -61,6 +61,13 @@ func (g *Graph) Add(name string) error {
 	return nil
 }
 
+func (g *Graph) Rename(oldName, newName string) error {
+	g.nodes[newName] = g.nodes[oldName]
+	delete(g.nodes, oldName)
+	g.indexes[g.nodes[newName].adjIndex] = newName
+	return nil
+}
+
 func (g *Graph) Remove(name string) error {
 	if _, fnd := g.nodes[name]; !fnd {
 		return errors.New("the node " + name + " does not exist")
@@ -70,7 +77,7 @@ func (g *Graph) Remove(name string) error {
 	l := g.nodes[name].level
 
 	delete(g.nodes, name)
-	delete(g.levels[l], name)
+	delete(g.levels[l], i)
 	for j := i; j < len(g.adj)-1; j++ {
 		g.indexes[j] = g.indexes[j+1]
 		g.nodes[g.indexes[j+1]].adjIndex = j
@@ -144,15 +151,15 @@ func (g *Graph) Evaluate() error {
 	}
 
 	// Setting starting nodes (nodes that is not set yet) and children
-	for key := range g.nodes {
+	for key, node := range g.nodes {
 		if !g.nodes[key].set {
 			g.nodes[key].set = true
 			g.nodes[key].level = 0
 
 			if g.levels[0] == nil {
-				g.levels[0] = make(map[string]*Node)
+				g.levels[0] = make(map[int]*Node)
 			}
-			g.levels[0][key] = g.nodes[key]
+			g.levels[0][node.adjIndex] = g.nodes[key]
 
 			if !g.nodes[key].childrenSet {
 				g.setChildren(key)
@@ -204,7 +211,7 @@ func (g *Graph) evaluate(pre [][]uint, depth uint) error {
 	}
 
 	if done {
-		g.levels = make([]map[string]*Node, depth)
+		g.levels = make([]map[int]*Node, depth)
 		return nil
 	}
 
@@ -224,18 +231,18 @@ func (g *Graph) evaluate(pre [][]uint, depth uint) error {
 	return nil
 }
 
-func (g *Graph) setNode(node string, level uint) {
-	if g.nodes[node].set {
+func (g *Graph) setNode(key string, level uint) {
+	if g.nodes[key].set {
 		return
 	}
 
-	g.nodes[node].set = true
-	g.nodes[node].level = level
+	g.nodes[key].set = true
+	g.nodes[key].level = level
 
 	if g.levels[level] == nil {
-		g.levels[level] = make(map[string]*Node)
+		g.levels[level] = make(map[int]*Node)
 	}
-	g.levels[level][node] = g.nodes[node]
+	g.levels[level][g.nodes[key].adjIndex] = g.nodes[key]
 }
 
 // CompileRun executes a runfunc on every node
@@ -245,9 +252,9 @@ func (g *Graph) setNode(node string, level uint) {
 // However, walks are not followed. The nodes are simply scanned over.
 // CompileRun is usfull for a naive bulk execution in topological order.
 func (g *Graph) CompileRun(f func(string) error) error {
-	for _, nodes := range g.levels {
-		for name := range nodes {
-			err := f(name)
+	for _, keys := range g.levels {
+		for key := range keys {
+			err := f(g.indexes[key])
 			if err != nil {
 				return err
 			}
