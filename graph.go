@@ -340,3 +340,19 @@ func (g *Graph) Output(as ...string) *bytes.Buffer {
 	buf.WriteString("}")
 	return buf
 }
+
+func (g *Graph) Graph() ([]string, [][]string) {
+	nds := []string{}
+	lks := [][]string{}
+
+	for name, node := range g.nodes {
+		nds = append(nds, name)
+		row := node.adjIndex
+		for col := range g.adj[row] {
+			if g.adj[row][col] == 1 {
+				lks = append(lks, []string{g.indexes[row], g.indexes[col]})
+			}
+		}
+	}
+	return nds, lks
+}
